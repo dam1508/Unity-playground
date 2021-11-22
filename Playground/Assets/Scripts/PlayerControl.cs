@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cinemachine;
 using UnityEngine.Events;
 
 public class PlayerControl : MonoBehaviour
@@ -34,6 +35,11 @@ public class PlayerControl : MonoBehaviour
     [SerializeField] float VFXTime = 1.0F;
     [SerializeField] Transform landPosition;
 
+    [Header("Camera Settings")]
+    [Space(10)]
+    [SerializeField] CinemachineVirtualCamera groundedCamera;
+    [SerializeField] CinemachineVirtualCamera airCamera;
+
     Vector2 ref_velocity = Vector2.zero;
     Rigidbody2D rb;
     PlayerInput pi;
@@ -48,6 +54,11 @@ public class PlayerControl : MonoBehaviour
     private void FixedUpdate()  
     {
         GroundCheck();
+    }
+
+    private void Update()
+    {
+        CameraControl();
     }
 
     private void GroundCheck()
@@ -67,6 +78,20 @@ public class PlayerControl : MonoBehaviour
                 }
                 isGrounded = true;
             }
+        }
+    }
+
+    private void CameraControl()
+    {
+        if (isGrounded)
+        {
+            groundedCamera.Priority = 1;
+            airCamera.Priority = 0;
+        }
+        else
+        {
+            groundedCamera.Priority = 0;
+            airCamera.Priority = 1;
         }
     }
 
@@ -97,9 +122,9 @@ public class PlayerControl : MonoBehaviour
             rb.velocity = new Vector2(rb.velocity.x, jumpPower);
             jump = false;
         }
-        if (jump && grappled)
+        else if (jump && grappled)
         {
-            rb.velocity = new Vector2(rb.velocity.x, jumpPower * 2);
+            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y + jumpPower);
             jump = false;
             pi.DeattachHook();
         }
