@@ -10,8 +10,9 @@ public class PlayerControl : MonoBehaviour
     [SerializeField] float hitPoints = 100.0F;
     [SerializeField] Healthbar healthbar;
 
-    float currHealth = 100.0F;
-    bool isDead = true;
+    [SerializeField] float currHealth = 100.0F;
+    bool isAlive = true;
+    Vector2 deathShot;
 
     [Header ("Movement")]
     [SerializeField] float moveSpeed = 10.0F;
@@ -39,6 +40,10 @@ public class PlayerControl : MonoBehaviour
     [Space(10)]
     [SerializeField] CinemachineVirtualCamera groundedCamera;
     [SerializeField] CinemachineVirtualCamera airCamera;
+
+    [Header("Misc")]
+    [Space(10)]
+    [SerializeField] SceneControler sceneController;
 
     Vector2 ref_velocity = Vector2.zero;
     Rigidbody2D rb;
@@ -105,28 +110,40 @@ public class PlayerControl : MonoBehaviour
     void TakeDamage(float amount)
     {
         currHealth -= amount;
-        //healthbar.SetValue(currHealth);
-        if (hitPoints <= 0)
-            isDead = true;
+        healthbar.SetValue(currHealth);
+        if (currHealth <= 0)
+        {
+            isAlive = false;
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        rb.AddForce(new Vector2(Random.Range(-1f, 1f), Random.Range(0f, 1f) ).normalized * 100f);
+        sceneController.LoadMainMenu();
     }
 
     public void Move(float move, bool crouch, bool jump, bool grappled)
     {
-        if (isGrounded || airControl)
+        if (isAlive)
         {
-            Vector2 targetVelocity = new Vector2(moveSpeed * move, rb.velocity.y);
-            rb.velocity = Vector2.SmoothDamp(rb.velocity, targetVelocity, ref ref_velocity, movementSoothing);
-        }
-        if (jump && isGrounded)
-        {
-            rb.velocity = new Vector2(rb.velocity.x, jumpPower);
-            jump = false;
-        }
-        else if (jump && grappled)
-        {
-            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y + jumpPower);
-            jump = false;
-            pi.DeattachHook();
+            if (isGrounded || airControl)
+            {
+                Vector2 targetVelocity = new Vector2(moveSpeed * move, rb.velocity.y);
+                rb.velocity = Vector2.SmoothDamp(rb.velocity, targetVelocity, ref ref_velocity, movementSoothing);
+            }
+            if (jump && isGrounded)
+            {
+                rb.velocity = new Vector2(rb.velocity.x, jumpPower);
+                jump = false;
+            }
+            else if (jump && grappled)
+            {
+                rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y + jumpPower);
+                jump = false;
+                pi.DeattachHook();
+            } 
         }
     }
     public void LandingVFX()
